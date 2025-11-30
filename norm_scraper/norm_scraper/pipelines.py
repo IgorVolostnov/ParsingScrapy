@@ -140,11 +140,12 @@ class PostgresPipeline(object):
         query = """
         INSERT INTO cameranorm (
             article, title, description, current_retail, current_dealer, 
-            old_retail, old_dealer, availability, price_list, grp, photo, link, brand, date_update, source, type_change
+            old_retail, old_dealer, availability, price_list, grp, photo, link, brand, date_create, creator, 
+            source, type_change
         ) VALUES (
             %(article)s, %(title)s, %(description)s, %(current_retail)s::numeric, %(current_dealer)s::numeric, 
             %(current_retail)s::numeric, %(current_dealer)s::numeric, %(availability)s::numeric, 'Нет в прайсах', 
-            'Нет в группах', %(photo)s, %(link)s, %(brand)s, NOW(), 'cameranorm', 'Новый товар'
+            'Нет в группах', %(photo)s, %(link)s, %(brand)s, NOW(), 'parsing', 'cameranorm', 'Новый товар'
         ) ON CONFLICT (article) DO UPDATE SET
             title = EXCLUDED.title,
             description = EXCLUDED.description,
@@ -153,8 +154,7 @@ class PostgresPipeline(object):
             availability = EXCLUDED.availability,
             photo = EXCLUDED.photo,
             link = EXCLUDED.link,
-            brand = EXCLUDED.brand,
-            date_update = NOW();
+            brand = EXCLUDED.brand;
         """
 
         # Подготовка параметров для безопасной передачи
@@ -174,7 +174,6 @@ class PostgresPipeline(object):
             self.cursor.execute(query, prepared_data)
             self.connection.commit()
         except Exception as e:
-            # Логирование ошибки
             spider.logger.error(f"Error executing SQL: {str(e)}")
             self.connection.rollback()
 
